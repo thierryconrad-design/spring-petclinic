@@ -1,19 +1,13 @@
 {
-  "name": "spring-petclinic",
+  "name": "greet-user-action",
   "version": "1.0.0",
-  "description": "[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/spring-projects/spring-petclinic) [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=7517918)",
+  "description": "Une action GitHub qui salue un utilisateur",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "test": "jest"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/thierryconrad-design/spring-petclinic.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/thierryconrad-design/spring-petclinic/issues"
-  },
-  "homepage": "https://github.com/thierryconrad-design/spring-petclinic#readme"
+  "dependencies": {
+    "@actions/core": "^1.10.0"
+  }
 }

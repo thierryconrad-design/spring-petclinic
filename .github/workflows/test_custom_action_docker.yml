@@ -12,6 +12,6 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Exécuter l'action Docker
-      uses: ./my-custom-action-docker/action.yml
+      uses: ./my-custom-action-docker/
       with:
         message: "Salut de l'action Docker"

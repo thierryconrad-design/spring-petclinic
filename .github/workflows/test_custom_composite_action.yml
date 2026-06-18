@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
       - id: foo
         # Exécution locale (même dépôt) pour valider rapidement l'action
-        uses: ./my-custom-composite-action/action.yml
+        uses: ./my-custom-composite-action/
         # Variante pédagogique : référencer l'action distante versionnée
         # uses: <OWNER>/<REPO>@<TAG_OU_SHA>
         with:
