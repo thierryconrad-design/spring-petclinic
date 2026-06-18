@@ -1,4 +1,4 @@
-name: "Exemple de workflow"
+name: "Exemple de workflow - Custom action docker"
 on:
   push:
     branches:
@@ -12,6 +12,6 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Exécuter l'action Docker
-      uses: ./ # Utilise l'action locale
+      uses: ./my-custom-action-docker/action.yml
       with:
         message: "Salut de l'action Docker"
