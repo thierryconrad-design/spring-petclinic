@@ -8,7 +8,69 @@ on:
   workflow_dispatch:
 
 jobs:
-  call-hello-template:
-    uses: ./.github/workflows/hello-template.yml
-    with:
-      username: Mona
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extraire la version du pom.xml
+        id: get_version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Set lower case owner name
+        run: |
+          echo "OWNER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image with Spring Boot Buildpacks
+        run: |
+          ./mvnw -DskipTests             -Dspring-boot.build-image.imageName=spring-petclinic:${{ steps.get_version.outputs.version }}             spring-boot:build-image
+
+      - name: Tag and push image to GHCR
+        run: |
+          docker tag spring-petclinic:${{ steps.get_version.outputs.version }} ghcr.io/${{ env.OWNER_LOWER }}/spring-petclinic:${{ steps.get_version.outputs.version }}
+          docker tag spring-petclinic:${{ steps.get_version.outputs.version }} ghcr.io/${{ env.OWNER_LOWER }}/spring-petclinic:${{ github.sha }}
+          docker tag spring-petclinic:${{ steps.get_version.outputs.version }} ghcr.io/${{ env.OWNER_LOWER }}/spring-petclinic:latest
+
+          docker push ghcr.io/${{ env.OWNER_LOWER }}/spring-petclinic:${{ steps.get_version.outputs.version }}
+          docker push ghcr.io/${{ env.OWNER_LOWER }}/spring-petclinic:${{ github.sha }}
+          docker push ghcr.io/${{ env.OWNER_LOWER }}/spring-petclinic:latest
+  update-gitops:
+    needs: push # Mettre ici le nom de votre job précédent (celui qui push sur GHCR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloner le dépôt d'infrastructure
+        uses: actions/checkout@v4
+        with:
+          repository: 'thierryconrad-design/helm' # A REMPLACER (ex: <VOTRE_USER_GITHUB>/gitops-infra)
+          token: ${{ secrets.GITOPS_PAT }}
+          path: 'infra-repo' # On clone dans un sous-dossier pour ne pas écraser l'espace de travail
+
+      - name: Mettre à jour la version de l'image
+        working-directory: ./infra-repo/dev
+        run: |
+          kustomize edit set image spring-petclinic=ghcr.io/<VOTRE_USER_GITHUB>/spring-petclinic:${{ github.sha }}
+
+      - name: Commit et Push vers le dépôt d'infrastructure
+        working-directory: ./infra-repo
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Auto-update image to tag ${{ github.sha }}"
+          git push  
